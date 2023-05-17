@@ -2,3 +2,4 @@
 /fe/dist
 /be/node_modules
 /be/dist
+/be/config/env/production.env

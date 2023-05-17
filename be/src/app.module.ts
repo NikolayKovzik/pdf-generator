@@ -3,10 +3,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
+import { configuration } from 'config/configuration';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath: '.development.env' }),
+    ConfigModule.forRoot({
+      envFilePath: `./config/env/${process.env.NODE_ENV}.env`,
+      isGlobal: true,
+      load: [configuration],
+    }),
     UsersModule,
   ],
   controllers: [AppController],
