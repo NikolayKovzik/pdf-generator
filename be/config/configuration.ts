@@ -2,6 +2,7 @@ export const configuration = () => ({
   nodeEnv: process.env.NODE_ENV,
   hostName: process.env.HOST_NAME,
   port: parseInt(process.env.PORT, 10) || 4005,
+
   database: {
     host: process.env.POSTGRES_HOST,
     port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
@@ -9,8 +10,13 @@ export const configuration = () => ({
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DATABASE,
   },
-  // jwt: {
-  //   secret: process.env.JWT_SECRET,
-  //   expiresIn: process.env.JWT_EXPIRES_IN,
-  // },
+
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    accessExpiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME,
+    refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRE_TIME,
+  },
+
+  crypSalt: process.env.CRYPT_SALT,
 });

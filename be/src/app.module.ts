@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './models/users/users.module';
 import { configuration } from 'config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { UserEntity } from './models/users/entities/user.entity';
 
 @Module({
   imports: [
@@ -22,15 +22,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         username: config.get('database.user'),
         password: config.get('database.password'),
         database: config.get('database.database'),
-        // entities: [],
+        entities: [UserEntity],
         synchronize: true,
-        autoLoadEntities: true,
       }),
       inject: [ConfigService],
     }),
     UsersModule,
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
