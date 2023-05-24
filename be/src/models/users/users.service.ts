@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 
@@ -12,21 +12,29 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
+  createUser(createUserDto: SignUpDto): Promise<UserEntity> {
     return this.usersRepository.save(createUserDto);
   }
 
-  findAll(): Promise<UserEntity[]> {
+  findAllUsers(): Promise<UserEntity[]> {
     return this.usersRepository.find();
   }
 
-  findOne(id: number): Promise<UserEntity | null> {
+  findUserById(id: number): Promise<UserEntity | null> {
     return this.usersRepository.findOneBy({ id });
   }
 
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
+  findUserByEmail(email: string): Promise<UserEntity | null> {
+    return this.usersRepository.findOneBy({ email });
+  }
+
+  updateUser(id: number, updateUserDto: UpdateUserDto): Promise<UserEntity> {
+    console.log(updateUserDto);
+    return this.usersRepository.save({
+      id,
+      ...updateUserDto,
+    });
+  }
 
   // remove(id: number) {
   //   return `This action removes a #${id} user`;

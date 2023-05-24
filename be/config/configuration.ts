@@ -18,5 +18,5 @@ export const configuration = () => ({
     refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRE_TIME,
   },
 
-  crypSalt: process.env.CRYPT_SALT,
+  cryptSalt: parseInt(process.env.CRYPT_SALT),
 });
