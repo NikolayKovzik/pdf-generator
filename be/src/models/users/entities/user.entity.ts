@@ -21,14 +21,14 @@ export class UserEntity {
   @Column({
     type: 'varchar',
   })
-  password: string;
+  password?: string;
 
   @Column({
     nullable: true,
     type: 'varchar',
     default: () => 'NULL',
   })
-  refreshToken: string;
+  refreshToken?: string;
 
   @Column({
     nullable: true,

@@ -20,6 +20,4 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(4)
   password?: string;
-
-  refreshToken?: string;
 }

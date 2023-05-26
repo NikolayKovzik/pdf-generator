@@ -1,7 +1,16 @@
-import { Controller, Get, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Post,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { SignUpDto } from 'src/auth/dto/signup.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -15,16 +24,21 @@ export class UsersController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.usersService.findUserById(+id);
+    return this.usersService.findPublicUserById(+id);
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.usersService.update(+id, updateUserDto);
-  // }
+  @Post()
+  createUser(@Body() signUpDto: SignUpDto) {
+    return this.usersService.createUser(signUpDto);
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.usersService.remove(+id);
-  // }
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.updateUser(+id, updateUserDto);
+  }
+
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string) {
+    return await this.usersService.deleteUser(+id);
+  }
 }

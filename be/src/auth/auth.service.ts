@@ -24,18 +24,13 @@ export class AuthService {
       throw new BadRequestException('User already exists');
     }
 
-    userDto.password = await bcrypt.hash(
-      userDto.password,
-      this.configService.get('cryptSalt'),
-    );
-
     const newUser = await this.usersService.createUser(userDto);
     const tokens = await this.getTokens(newUser.id);
 
-    await this.updateRefreshToken(newUser.id, tokens.refreshToken);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...publicUserData } = JSON.parse(JSON.stringify(newUser));
+    const publicUserData = await this.updateRefreshToken(
+      newUser.id,
+      tokens.refreshToken,
+    );
 
     return {
       tokens,
@@ -61,11 +56,9 @@ export class AuthService {
 
     const tokens = await this.getTokens(userExists.id);
 
-    await this.updateRefreshToken(userExists.id, tokens.refreshToken);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, refreshToken, ...publicUserData } = JSON.parse(
-      JSON.stringify(userExists),
+    const publicUserData = await this.updateRefreshToken(
+      userExists.id,
+      tokens.refreshToken,
     );
 
     return {
@@ -75,7 +68,7 @@ export class AuthService {
   }
 
   async logout(userId: number) {
-    return this.usersService.updateUser(userId, { refreshToken: null });
+    return this.usersService.updateRefreshToken(userId, null);
   }
 
   async hashData(data: string) {
@@ -84,9 +77,10 @@ export class AuthService {
 
   async updateRefreshToken(userId: number, refreshToken: string) {
     const hashedRefreshToken = await this.hashData(refreshToken);
-    await this.usersService.updateUser(userId, {
-      refreshToken: hashedRefreshToken,
-    });
+    return await this.usersService.updateRefreshToken(
+      userId,
+      hashedRefreshToken,
+    );
   }
 
   async getTokens(userId: number) {
@@ -117,7 +111,7 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(userId: number, oldRefreshToken: string) {
+  async updateTokens(userId: number, oldRefreshToken: string) {
     const userExists = await this.usersService.findUserById(userId);
     if (!userExists || !userExists.refreshToken) {
       throw new ForbiddenException('Access Denied');
@@ -135,11 +129,9 @@ export class AuthService {
 
     const newTokens = await this.getTokens(userExists.id);
 
-    await this.updateRefreshToken(userExists.id, newTokens.refreshToken);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, refreshToken, ...publicUserData } = JSON.parse(
-      JSON.stringify(userExists),
+    const publicUserData = await this.updateRefreshToken(
+      userExists.id,
+      newTokens.refreshToken,
     );
 
     return {
