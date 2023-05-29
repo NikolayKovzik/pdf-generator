@@ -131,4 +131,33 @@ export class UsersService {
 
     return res.raw[0];
   }
+
+  async uploadImage(
+    id: number,
+    file: Express.Multer.File,
+  ): Promise<PublicUserEntity> {
+    console.log(file);
+    const query = `
+    WITH updated_user AS (
+      UPDATE "user"
+      SET "image" = $1
+      WHERE "id" = $2
+      RETURNING *
+    )
+    SELECT "id", "email", "firstName", "lastName", "image", "pdf"
+    FROM updated_user;
+  `;
+    const hostName = this.configService.get('hostName');
+    const port = this.configService.get('port');
+    const fileName = file.filename;
+    const imageSrc = `${hostName}:${
+      port ? port : ''
+    }/assets/avatars/${fileName}`;
+    const [updatedUser] = await this.usersRepository.query(query, [
+      imageSrc,
+      id,
+    ]);
+
+    return updatedUser;
+  }
 }

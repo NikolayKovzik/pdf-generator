@@ -5,6 +5,8 @@ import { configuration } from 'config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserEntity } from './models/users/entities/user.entity';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -12,6 +14,13 @@ import { UserEntity } from './models/users/entities/user.entity';
       envFilePath: `./config/env/${process.env.NODE_ENV}.env`,
       isGlobal: true,
       load: [configuration],
+    }),
+    ServeStaticModule.forRoot({
+      serveStaticOptions: {
+        index: false,
+      },
+      rootPath: join(__dirname, '../..', 'public/assets/avatars'),
+      serveRoot: '/assets/avatars',
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
