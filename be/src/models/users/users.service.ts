@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
-import { PublicUserEntity } from './types/types';
+import { PublicUserEntity } from './entities/public-user.entity';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -16,30 +16,32 @@ export class UsersService {
     private configService: ConfigService,
   ) {}
 
-  async createUser(createUserDto: SignUpDto): Promise<UserEntity> {
+  async createUser(createUserDto: CreateUserDto): Promise<PublicUserEntity> {
     const hashedPassword = await bcrypt.hash(
       createUserDto.password,
       this.configService.get('cryptSalt'),
     );
 
-    return this.usersRepository.save({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+    const query = `
+    INSERT INTO "user" ("email", "firstName", "lastName", "password")
+    VALUES ($1, $2, $3, $4)
+    RETURNING "id", "email", "firstName", "lastName", "image", "pdf";
+  `;
+
+    const [createdUser] = await this.usersRepository.query(query, [
+      createUserDto.email,
+      createUserDto.firstName,
+      createUserDto.lastName,
+      hashedPassword,
+    ]);
+
+    return createdUser;
   }
 
   findAllUsers(): Promise<PublicUserEntity[]> {
     return this.usersRepository.find({
       select: ['id', 'email', 'firstName', 'lastName', 'image', 'pdf'],
     });
-  }
-
-  findUserById(id: number): Promise<UserEntity | null> {
-    return this.usersRepository.findOneBy({ id });
-  }
-
-  findUserByEmail(email: string): Promise<UserEntity | null> {
-    return this.usersRepository.findOneBy({ email });
   }
 
   findPublicUserById(id: number): Promise<PublicUserEntity | null> {
@@ -57,28 +59,66 @@ export class UsersService {
       .getOne();
   }
 
-  updateUser(
+  findUserById(id: number): Promise<UserEntity | null> {
+    return this.usersRepository.findOneBy({ id });
+  }
+
+  findUserByEmail(email: string): Promise<UserEntity | null> {
+    return this.usersRepository.findOneBy({ email });
+  }
+
+  async updateUser(
     id: number,
     updateUserDto: UpdateUserDto,
   ): Promise<PublicUserEntity> {
-    return this.usersRepository.save({
+    const columnNames = Object.keys(updateUserDto);
+    const fieldValues = Object.values(updateUserDto);
+
+    if (columnNames['password']) {
+      columnNames['password'] = await bcrypt.hash(
+        updateUserDto.password,
+        this.configService.get('cryptSalt'),
+      );
+    }
+
+    const query = `
+    UPDATE "user"
+    SET ${columnNames
+      .map((key, index) => `"${key}" = $${index + 1}`)
+      .join(', ')}
+    WHERE "id" = $${columnNames.length + 1}
+    RETURNING "id", "email", "firstName", "lastName", "image", "pdf";
+  `;
+
+    const [updatedUser] = await this.usersRepository.query(query, [
+      ...fieldValues,
       id,
-      ...updateUserDto,
-    });
+    ]);
+
+    return updatedUser;
   }
 
   async updateRefreshToken(
     id: number,
     refreshToken: string | null,
   ): Promise<PublicUserEntity> {
-    const res = await this.usersRepository
-      .createQueryBuilder('user')
-      .update(UserEntity)
-      .set({ refreshToken })
-      .where('id = :id', { id })
-      .returning(['email', 'id', 'firstName', 'lastName', 'image', 'pdf'])
-      .execute();
-    return res.raw[0];
+    const query = `
+    WITH updated_user AS (
+      UPDATE "user"
+      SET "refreshToken" = $1
+      WHERE "id" = $2
+      RETURNING *
+    )
+    SELECT "id", "email", "firstName", "lastName", "image", "pdf"
+    FROM updated_user;
+  `;
+
+    const [updatedUser] = await this.usersRepository.query(query, [
+      refreshToken,
+      id,
+    ]);
+
+    return updatedUser;
   }
 
   async deleteUser(id: number): Promise<PublicUserEntity> {
@@ -86,7 +126,7 @@ export class UsersService {
       .createQueryBuilder('user')
       .delete()
       .where('id = :id', { id })
-      .returning(['email', 'id', 'firstName', 'lastName', 'image', 'pdf'])
+      .returning(['id', 'email', 'firstName', 'lastName', 'image', 'pdf'])
       .execute();
 
     return res.raw[0];
