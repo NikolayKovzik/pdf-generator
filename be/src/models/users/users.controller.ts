@@ -11,14 +11,16 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   ParseFilePipe,
+  Res,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, parse } from 'path';
+import { Response } from 'express';
 
 @ApiTags('Users')
 @Controller('users')
@@ -97,5 +99,11 @@ export class UsersController {
     @Param('id') id: string,
   ) {
     return this.usersService.uploadImage(+id, file);
+  }
+
+  @Get(':id/generatePDF')
+  @ApiOperation({ summary: 'Download PDF' })
+  generatePDF(@Param('id') id: string, @Res() response: Response) {
+    return this.usersService.generatePDF(+id, response);
   }
 }
